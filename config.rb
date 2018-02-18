@@ -31,11 +31,16 @@ page '/*.txt', layout: false
 # Methods defined in the helpers block are available in templates
 # https://middlemanapp.com/basics/helper-methods/
 
-# helpers do
-#   def some_helper
-#     'Helping'
-#   end
-# end
+helpers do
+  def dev?
+    config[:environment] == :development
+  end
+
+  def webpack_js(assets)
+    return assets unless dev?
+    "http://localhost:8080/javascripts/#{assets}.js"
+  end
+end
 
 # Build-specific configuration
 # https://middlemanapp.com/advanced/configuration/#environment-specific-settings
@@ -44,3 +49,15 @@ page '/*.txt', layout: false
 #   activate :minify_css
 #   activate :minify_javascript
 # end
+
+activate :external_pipeline,
+         name: :webpack,
+         command:
+         if build?
+           'BUILD_PRODUCTION=1 ./node_modules/webpack/bin/webpack.js --bail -p'
+         else
+           'BUILD_DEVELOPMENT=1 ./node_modules/webpack-dev-server/' \
+           'bin/webpack-dev-server.js --hotOnly -d --progress --color'
+         end,
+         source: '.tmp/dist',
+         latency: 1
